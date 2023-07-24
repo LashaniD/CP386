@@ -37,6 +37,57 @@ void readFile(FILE *file) {
     free(line);
 }
 
+void calculateTotalThreads(FILE *file) {
+    char *line = NULL;
+    size_t len = 0;
+    ssize_t read;
+
+    while ((read = getline(&line, &len, file)) != -1) {
+        totalThreads++;
+    }
+
+    rewind(file);
+    free(line);
+}
+
+bool isSafeState() {
+    int work[MAX_RESOURCES];
+    bool finish[MAX_THREADS];
+    bool safe = true;
+
+    memcpy(work, availableResources, sizeof(int) * totalResources);
+    memset(finish, false, sizeof(bool) * totalThreads);
+
+    for (int i = 0; i < totalThreads; i++) {
+        for (int j = 0; j < totalThreads; j++) {
+            if (!finish[j]) {
+                int k;
+                for (k = 0; k < totalResources; k++) {
+                    if (maxResources[j][k] - allocatedResources[j][k] > work[k]) {
+                        break;
+                    }
+                }
+
+                if (k == totalResources) {
+                    for (k = 0; k < totalResources; k++) {
+                        work[k] += allocatedResources[j][k];
+                    }
+
+                    finish[j] = true;
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < totalThreads; i++) {
+        if (!finish[i]) {
+            safe = false;
+            break;
+        }
+    }
+
+    return safe;
+}
 
 int main(int argc, char **argv) {
     FILE* file;
@@ -50,6 +101,9 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         availableResources[i - 1] = atoi(argv[i]);
     }
+    
+    calculateTotalThreads(file);
+    printf("Number of Customers: %d\n", totalThreads);
     
     printf("Maximum resources from file:\n");
     readFile(file);
