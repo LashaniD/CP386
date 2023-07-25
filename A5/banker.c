@@ -24,18 +24,24 @@ int *parseResourceLine(char *line) {
     return arr;
 }
 
+
 void readFile(FILE *file) {
     char *line = NULL;
     size_t len = 0;
     ssize_t read;
 
     for (int i = 0; i < totalThreads; i++) {
-        maxResources[i] = parseResourceLine(line);
+        int *resourceLine = parseResourceLine(line);
+        for (int j = 0; j < totalResources; j++) {
+            maxResources[i][j] = resourceLine[j];
+        }
+        free(resourceLine);
         read = getline(&line, &len, file);
     }
-    
+
     free(line);
 }
+
 
 void calculateTotalThreads(FILE *file) {
     char *line = NULL;
